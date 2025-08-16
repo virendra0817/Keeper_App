@@ -16,6 +16,10 @@ const pool = new Pool({
   port: process.env.DB_PORT
 });
 
+app.get("/", (req, res) => {
+  res.send("Backend API is running 🚀");
+});
+
 // Get all notes
 app.get("/notes", async (req, res) => {
   try {
