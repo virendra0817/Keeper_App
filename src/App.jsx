@@ -4,12 +4,14 @@ import Footer from "./Footer";
 import Note from "./Note";
 import CreateArea from "./CreateArea";
 
+const API_URL = import.meta.env.VITE_API_URL; // 🔑 Use env variable
+
 function App() {
   const [notes, setNotes] = useState([]);
 
   // Fetch notes from backend on first render
   useEffect(() => {
-    fetch("http://localhost:5000/notes")
+    fetch(`${API_URL}/notes`)
       .then((res) => res.json())
       .then((data) => setNotes(data))
       .catch((err) => console.error("Error fetching notes:", err));
@@ -23,7 +25,7 @@ function App() {
   // Delete note from state and backend
   async function deleteNote(id) {
     try {
-      const response = await fetch(`http://localhost:5000/notes/${id}`, {
+      const response = await fetch(`${API_URL}/notes/${id}`, {
         method: "DELETE",
       });
 

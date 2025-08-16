@@ -9,11 +9,11 @@ app.use(cors());
 app.use(express.json());
 
 const pool = new Pool({
-  user: "DB_USER",
-  host: "DB_HOST",
-  database: "DB_NAME",
-  password: "DB_PASSWORD",
-  port:"DB_PORT"
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  password: process.env.DB_PASSWORD,
+  port: process.env.DB_PORT
 });
 
 // Get all notes
@@ -32,7 +32,7 @@ app.post("/notes", async (req, res) => {
   try {
     const { title, content } = req.body;
     const result = await pool.query(
-      "INSERT INTO notes (title, content) VALUES ( $1, $2) RETURNING *",
+      "INSERT INTO notes (title, content) VALUES ($1, $2) RETURNING *",
       [title, content]
     );
     res.json(result.rows[0]);
@@ -54,4 +54,7 @@ app.delete("/notes/:id", async (req, res) => {
   }
 });
 
-app.listen(5000, () => console.log("Server running on http://localhost:5000"));
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on port ${PORT}`);
+});
