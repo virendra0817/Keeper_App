@@ -4,38 +4,55 @@ import Footer from "./Footer";
 import Note from "./Note";
 import CreateArea from "./CreateArea";
 
-const API_URL = import.meta.env.VITE_API_URL; // 🔑 Use env variable
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 function App() {
   const [notes, setNotes] = useState([]);
 
-  // Fetch notes from backend on first render
+  // Fetch notes on mount
   useEffect(() => {
-    fetch(`${API_URL}/notes`)
-      .then((res) => res.json())
-      .then((data) => setNotes(data))
-      .catch((err) => console.error("Error fetching notes:", err));
+    async function fetchNotes() {
+      try {
+        const res = await fetch(`${API_URL}/notes`);
+        if (!res.ok) throw new Error("Failed to fetch notes");
+        const data = await res.json();
+        setNotes(data);
+      } catch (err) {
+        console.error("Error fetching notes:", err);
+      }
+    }
+    fetchNotes();
   }, []);
 
-  // Add new note to state
-  function addNote(newNote) {
-    setNotes((prevNotes) => [...prevNotes, newNote]);
+  // Add new note to backend and state
+  async function addNote(note) {
+    try {
+      const res = await fetch(`${API_URL}/notes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(note),
+      });
+      if (!res.ok) throw new Error("Failed to create note");
+      const created = await res.json();
+      setNotes(prev => [created, ...prev]); // newest first
+    } catch (err) {
+      console.error("Error adding note:", err);
+    }
   }
 
-  // Delete note from state and backend
+  // Delete note from backend and state
   async function deleteNote(id) {
     try {
-      const response = await fetch(`${API_URL}/notes/${id}`, {
+      const res = await fetch(`${API_URL}/notes/${id}`, {
         method: "DELETE",
       });
-
-      if (!response.ok) {
+      if (res.status === 204) {
+        setNotes(prev => prev.filter(n => n.id !== id));
+      } else {
         throw new Error("Failed to delete note");
       }
-
-      setNotes((prevNotes) => prevNotes.filter((note) => note.id !== id));
-    } catch (error) {
-      console.error("Error deleting note:", error);
+    } catch (err) {
+      console.error("Error deleting note:", err);
     }
   }
 
@@ -43,12 +60,12 @@ function App() {
     <div>
       <Header />
       <CreateArea onAdd={addNote} />
-      {notes.map((noteItem) => (
+      {notes.map(note => (
         <Note
-          key={noteItem.id}
-          id={noteItem.id}
-          title={noteItem.title}
-          content={noteItem.content}
+          key={note.id}
+          id={note.id}
+          title={note.title}
+          content={note.content}
           onDelete={deleteNote}
         />
       ))}

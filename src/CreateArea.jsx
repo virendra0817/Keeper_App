@@ -3,58 +3,40 @@ import AddIcon from "@mui/icons-material/Add";
 import Fab from "@mui/material/Fab";
 import Zoom from "@mui/material/Zoom";
 
-const API_URL = import.meta.env.VITE_API_URL; // 🔑 use env variable
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-function CreateArea(props) {
+function CreateArea({ onAdd }) {
   const [isExpanded, setExpanded] = useState(false);
-
-  const [note, setNote] = useState({
-    title: "",
-    content: ""
-  });
+  const [note, setNote] = useState({ title: "", content: "" });
 
   function handleChange(event) {
     const { name, value } = event.target;
-    setNote((prevNote) => ({
-      ...prevNote,
-      [name]: value
-    }));
-  }
-
-  async function submitNote(event) {
-    event.preventDefault();
-
-    // Optimistically update UI
-    const tempNote = { ...note };
-    props.onAdd(tempNote);
-
-    // Clear form instantly
-    setNote({ title: "", content: "" });
-
-    try {
-      const response = await fetch(`${API_URL}/notes`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(tempNote)
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to save note");
-      }
-
-      const savedNote = await response.json();
-
-      // Replace temporary note with saved one (has DB id)
-      if (props.onReplace) {
-        props.onReplace(tempNote, savedNote);
-      }
-    } catch (error) {
-      console.error("Error saving note:", error);
-    }
+    setNote(prev => ({ ...prev, [name]: value }));
   }
 
   function expand() {
     setExpanded(true);
+  }
+
+  async function submitNote(event) {
+    event.preventDefault();
+    if (!note.title.trim()) return; // title required
+
+    try {
+      const res = await fetch(`${API_URL}/notes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(note)
+      });
+      if (!res.ok) throw new Error("Failed to save note");
+      const saved = await res.json();
+      onAdd(saved);            // add saved note with real ID
+    } catch (err) {
+      console.error("Error saving note:", err);
+    } finally {
+      setNote({ title: "", content: "" });
+      setExpanded(false);
+    }
   }
 
   return (
@@ -66,9 +48,9 @@ function CreateArea(props) {
             onChange={handleChange}
             value={note.title}
             placeholder="Title"
+            autoFocus
           />
         )}
-
         <textarea
           name="content"
           onClick={expand}
@@ -78,7 +60,7 @@ function CreateArea(props) {
           rows={isExpanded ? 3 : 1}
         />
         <Zoom in={isExpanded}>
-          <Fab onClick={submitNote}>
+          <Fab onClick={submitNote} aria-label="Add">
             <AddIcon />
           </Fab>
         </Zoom>
