@@ -3,6 +3,8 @@ import AddIcon from "@mui/icons-material/Add";
 import Fab from "@mui/material/Fab";
 import Zoom from "@mui/material/Zoom";
 
+const API_URL = import.meta.env.VITE_API_URL; // 🔑 use env variable
+
 function CreateArea(props) {
   const [isExpanded, setExpanded] = useState(false);
 
@@ -29,11 +31,8 @@ function CreateArea(props) {
     // Clear form instantly
     setNote({ title: "", content: "" });
 
-    console.log("Sending note:", note);
-
-
     try {
-      const response = await fetch("http://localhost:5000/notes", {
+      const response = await fetch(`${API_URL}/notes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(tempNote)
@@ -46,7 +45,9 @@ function CreateArea(props) {
       const savedNote = await response.json();
 
       // Replace temporary note with saved one (has DB id)
-      props.onReplace(tempNote, savedNote);
+      if (props.onReplace) {
+        props.onReplace(tempNote, savedNote);
+      }
     } catch (error) {
       console.error("Error saving note:", error);
     }
