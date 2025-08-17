@@ -13,7 +13,8 @@ const pool = new Pool({
   host: process.env.DB_HOST,
   database: process.env.DB_NAME,
   password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT
+  port: process.env.DB_PORT,
+  ssl: { rejectUnauthorized: false }   // ✅ Required for Render
 });
 
 app.get("/", (req, res) => {
@@ -51,7 +52,7 @@ app.delete("/notes/:id", async (req, res) => {
   try {
     const { id } = req.params;
     await pool.query("DELETE FROM notes WHERE id = $1", [id]);
-    res.sendStatus(204); // No content
+    res.sendStatus(204);
   } catch (err) {
     console.error(err);
     res.status(500).send("Server error");
