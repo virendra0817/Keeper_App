@@ -13,14 +13,12 @@ const pool = new Pool({
   host: process.env.DB_HOST,
   database: process.env.DB_NAME,
   password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT,
-  ssl: { rejectUnauthorized: false }   // ✅ Required for Render
+  port: process.env.DB_PORT
 });
 
 app.get("/", (req, res) => {
   res.send("Backend API is running 🚀");
 });
-
 // Get all notes
 app.get("/notes", async (req, res) => {
   try {
@@ -52,7 +50,7 @@ app.delete("/notes/:id", async (req, res) => {
   try {
     const { id } = req.params;
     await pool.query("DELETE FROM notes WHERE id = $1", [id]);
-    res.sendStatus(204);
+    res.sendStatus(204); // No content
   } catch (err) {
     console.error(err);
     res.status(500).send("Server error");
